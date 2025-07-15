@@ -110,11 +110,11 @@ func (a *ApplicationDefault) SetUp() (err error) {
 	})
 	a.router.Route("/invoices", func(r chi.Router) {
 
+		r.Patch("/{id}", hdInvoice.Update())
 		// - GET /invoices
 		r.Get("/", hdInvoice.GetAll())
 		// - POST /invoices
 		r.Post("/", hdInvoice.Create())
-		r.Patch("/:id", hdInvoice.Update())
 	})
 	a.router.Route("/sales", func(r chi.Router) {
 		// - GET /sales

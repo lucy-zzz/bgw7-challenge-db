@@ -25,7 +25,6 @@ func (s *InvoicesDefault) Save(i *internal.Invoice) (err error) {
 	return
 }
 
-func (s *InvoicesDefault) Update(i internal.InvoiceAttributes, id int) (data internal.Invoice, err error) {
-	data, err = s.rp.Update(i, id)
-	return
+func (s *InvoicesDefault) Update(i internal.InvoiceAttributes, id int) (internal.Invoice, error) {
+	return s.rp.Update(i, id)
 }

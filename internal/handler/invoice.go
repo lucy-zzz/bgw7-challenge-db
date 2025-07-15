@@ -9,6 +9,7 @@ import (
 
 	"github.com/bootcamp-go/web/request"
 	"github.com/bootcamp-go/web/response"
+	"github.com/go-chi/chi/v5"
 )
 
 // NewInvoicesDefault returns a new InvoicesDefault
@@ -113,8 +114,8 @@ func (h *InvoicesDefault) Create() http.HandlerFunc {
 
 func (h *InvoicesDefault) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var reqBody internal.InvoiceAttributes
-		idStr := r.Header.Get("id")
+		var reqBody RequestBodyInvoice
+		idStr := chi.URLParam(r, "id")
 
 		if idStr == "" {
 			response.Error(w, http.StatusBadRequest, "ID cannot be null")
@@ -135,7 +136,26 @@ func (h *InvoicesDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		data, err := h.sv.Update(reqBody, id)
+		var req internal.InvoiceAttributes
+		req.CustomerId = reqBody.CustomerId
+		req.Datetime = reqBody.Datetime
+		req.Total = reqBody.Total
+
+		data, err := h.sv.Update(req, id)
+
+		if err != nil {
+			if err.Error() == "BAD REQUEST" {
+				response.Error(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			if err.Error() == "NOT FOUND" {
+				response.Error(w, http.StatusNotFound, err.Error())
+				return
+			}
+			response.Error(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
 		response.JSON(w, http.StatusOK, map[string]any{
 			"message": "invoice updated",
 			"data":    data,
