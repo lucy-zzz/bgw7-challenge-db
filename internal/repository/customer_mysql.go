@@ -64,7 +64,26 @@ func (r *CustomersMySQL) Save(c *internal.Customer) (err error) {
 
 	// set the id
 	(*c).Id = int(id)
-	
+
 	return
 }
 
+func (r *CustomersMySQL) GetTotalByCondition() ([]internal.TotalByConditionResponse, error) {
+	query := "SELECT `condition`, ROUND(SUM(i.total), 2) AS total_rounded FROM customers c LEFT JOIN invoices i ON c.id = i.customer_id GROUP BY `condition`"
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []internal.TotalByConditionResponse
+	for rows.Next() {
+		var r internal.TotalByConditionResponse
+		if err := rows.Scan(&r.Condition, &r.TotalRounded); err != nil {
+			return nil, err
+		}
+		results = append(results, r)
+	}
+
+	return results, nil
+}

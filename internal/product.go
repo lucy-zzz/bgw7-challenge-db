@@ -15,3 +15,9 @@ type Product struct {
 	// ProductAttributes is the attributes of the product.
 	ProductAttributes
 }
+
+type ProductTopSoldResponse struct {
+	Id                int    `json:"id"`
+	Description       string `json:"description"`
+	TotalQuantitySold int    `json:"total_quantity_sold"`
+}

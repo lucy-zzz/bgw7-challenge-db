@@ -100,6 +100,7 @@ func (a *ApplicationDefault) SetUp() (err error) {
 		r.Get("/", hdCustomer.GetAll())
 		// - POST /customers
 		r.Post("/", hdCustomer.Create())
+		r.Get("/getTotalsByCondition", hdCustomer.GetTotalsByCondition())
 	})
 	a.router.Route("/products", func(r chi.Router) {
 

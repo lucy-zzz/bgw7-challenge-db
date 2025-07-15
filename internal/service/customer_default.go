@@ -24,3 +24,7 @@ func (s *CustomersDefault) Save(c *internal.Customer) (err error) {
 	err = s.rp.Save(c)
 	return
 }
+
+func (s *CustomersDefault) GetTotalByCondition() ([]internal.TotalByConditionResponse, error) {
+	return s.rp.GetTotalByCondition()
+}
