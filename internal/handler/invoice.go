@@ -1,9 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"app/internal"
 
@@ -29,7 +27,6 @@ type InvoiceJSON struct {
 	Total      float64 `json:"total"`
 	CustomerId int     `json:"customer_id"`
 }
-
 // GetAll returns all invoices
 func (h *InvoicesDefault) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +64,6 @@ type RequestBodyInvoice struct {
 	Total      float64 `json:"total"`
 	CustomerId int     `json:"customer_id"`
 }
-
 // Create creates a new invoice
 func (h *InvoicesDefault) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -107,38 +103,6 @@ func (h *InvoicesDefault) Create() http.HandlerFunc {
 		response.JSON(w, http.StatusOK, map[string]any{
 			"message": "invoice created",
 			"data":    iv,
-		})
-	}
-}
-
-func (h *InvoicesDefault) Update() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var reqBody internal.InvoiceAttributes
-		idStr := r.Header.Get("id")
-
-		if idStr == "" {
-			response.Error(w, http.StatusBadRequest, "ID cannot be null")
-			return
-		}
-
-		id, err := strconv.Atoi(idStr)
-
-		if err != nil {
-			response.Error(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		err = json.NewDecoder(r.Body).Decode(&reqBody)
-
-		if err != nil {
-			response.Error(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		data, err := h.sv.Update(reqBody, id)
-		response.JSON(w, http.StatusOK, map[string]any{
-			"message": "invoice updated",
-			"data":    data,
 		})
 	}
 }

@@ -67,12 +67,3 @@ func (r *InvoicesMySQL) Save(i *internal.Invoice) (err error) {
 
 	return
 }
-
-func (r *InvoicesMySQL) Update(i internal.InvoiceAttributes, id int) (iv internal.Invoice, err error) {
-	res, err := r.db.Exec(
-		"UPDATE invoices SET column = ?, ?, ? WHERE id = ?",
-		(i).Datetime, (i).Total, (i).CustomerId, id,
-	)
-
-	return iv, err
-}
