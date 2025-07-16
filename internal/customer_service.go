@@ -7,4 +7,5 @@ type ServiceCustomer interface {
 	// Save saves a customer
 	Save(c *Customer) (err error)
 	GetTotalByCondition() ([]TotalByConditionResponse, error)
+	GetTopActiveCustomers() ([]CustomerTopSpentResponse, error)
 }

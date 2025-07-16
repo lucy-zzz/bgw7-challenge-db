@@ -28,3 +28,7 @@ func (s *CustomersDefault) Save(c *internal.Customer) (err error) {
 func (s *CustomersDefault) GetTotalByCondition() ([]internal.TotalByConditionResponse, error) {
 	return s.rp.GetTotalByCondition()
 }
+
+func (s *CustomersDefault) GetTopActiveCustomers() ([]internal.CustomerTopSpentResponse, error) {
+	return s.rp.GetTopActiveCustomers()
+}

@@ -7,4 +7,5 @@ type RepositoryCustomer interface {
 	// Save saves a customer into the database.
 	Save(c *Customer) (err error)
 	GetTotalByCondition() ([]TotalByConditionResponse, error)
+	GetTopActiveCustomers() ([]CustomerTopSpentResponse, error)
 }

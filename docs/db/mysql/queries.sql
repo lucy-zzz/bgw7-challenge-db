@@ -27,21 +27,19 @@ ORDER BY
 LIMIT 5;
 
 -- Top 5 dos customers ativos quem gastou mais dinheiro                
-
 SELECT 
-    c.id,
-    c.first_name,
-    c.last_name,
-    ROUND(SUM(i.total), 2) AS total_spent
+	c.id,
+	c.first_name,
+	c.last_name,
+	SUM(i.total) AS total_spent
 FROM 
-    customers c
+	customers c
 JOIN 
-    invoices i ON c.id = i.customer_id
+	invoices i ON c.id = i.customer_id
 WHERE 
-    c.`condition` = 1
+	c.condition = 1
 GROUP BY 
-    c.id, c.first_name, c.last_name
+	c.id, c.first_name, c.last_name
 ORDER BY 
-    total_spent DESC
-LIMIT 5;
-
+	total_spent DESC
+LIMIT 5
