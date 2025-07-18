@@ -1,3 +1,4 @@
+// go: generate mockgen -source=../customer_mysql.go-destination=mocks/customer_mock.go~package=mocks
 package repository
 
 import (
