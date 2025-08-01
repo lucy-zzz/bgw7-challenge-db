@@ -100,7 +100,6 @@ func (a *ApplicationDefault) SetUp() (err error) {
 	a.router.Use(middleware.Logger)
 	a.router.Use(middleware.Recoverer)
 	// - endpoints
-
 	a.router.Route("/customers", func(r chi.Router) {
 		// - GET /customers
 		r.Get("/", hdCustomer.GetAll())
@@ -110,7 +109,6 @@ func (a *ApplicationDefault) SetUp() (err error) {
 		r.Get("/getTopActiveCustomers", hdCustomer.GetTopActiveCustomers())
 	})
 	a.router.Route("/products", func(r chi.Router) {
-
 		// - GET /products
 		r.Get("/", hdProduct.GetAll())
 		// - POST /products
@@ -135,6 +133,7 @@ func (a *ApplicationDefault) SetUp() (err error) {
 	return
 }
 
+// Run runs the application.
 func (a *ApplicationDefault) Run() (err error) {
 	defer a.db.Close()
 
