@@ -60,17 +60,23 @@ type ApplicationDefault struct {
 
 // SetUp sets up the application.
 func (a *ApplicationDefault) SetUp() (err error) {
-	// dependencies
-	// - db: init
+	if err := a.createDatabaseIfNotExists(); err != nil {
+		return err
+	}
+
 	a.db, err = sql.Open("mysql", a.cfgDb.FormatDSN())
 	if err != nil {
-		return
+		return fmt.Errorf("failed to connect to db fantasy_products: %w", err)
 	}
-	// - db: ping
-	err = a.db.Ping()
-	if err != nil {
-		return
+
+	if err := a.db.Ping(); err != nil {
+		return fmt.Errorf("failed to ping db: %w", err)
 	}
+
+	if err := a.createTablesIfNotExist(); err != nil {
+		return err
+	}
+
 	// - repository
 	rpCustomer := repository.NewCustomersMySQL(a.db)
 	rpProduct := repository.NewProductsMySQL(a.db)
@@ -134,6 +140,82 @@ func (a *ApplicationDefault) Run() (err error) {
 
 	err = http.ListenAndServe(a.cfgAddr, a.router)
 	return
+}
+
+func (a *ApplicationDefault) createDatabaseIfNotExists() error {
+	cfgNoDB := *a.cfgDb
+	cfgNoDB.DBName = ""
+
+	dbRoot, err := sql.Open("mysql", cfgNoDB.FormatDSN())
+	if err != nil {
+		return fmt.Errorf("failed to connect to MySQL root: %w", err)
+	}
+	defer dbRoot.Close()
+
+	_, err = dbRoot.Exec("DROP DATABASE fantasy_products")
+	if err != nil {
+		return fmt.Errorf("failed to drop database: %w", err)
+	}
+
+	_, err = dbRoot.Exec("CREATE DATABASE IF NOT EXISTS fantasy_products")
+	if err != nil {
+		return fmt.Errorf("failed to create database: %w", err)
+	}
+
+	return nil
+}
+
+func (a *ApplicationDefault) createTablesIfNotExist() error {
+	queries := []string{
+		// customers
+		`CREATE TABLE IF NOT EXISTS customers (
+			id int NOT NULL AUTO_INCREMENT,
+			first_name varchar(45) DEFAULT NULL,
+			last_name varchar(45) DEFAULT NULL,
+			` + "`condition`" + ` tinyint(1) DEFAULT NULL,
+			PRIMARY KEY (id)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+
+		// invoices
+		`CREATE TABLE IF NOT EXISTS invoices (
+			id int NOT NULL AUTO_INCREMENT,
+			datetime datetime DEFAULT NULL,
+			customer_id int DEFAULT NULL,
+			total float DEFAULT NULL,
+			PRIMARY KEY (id),
+			KEY idx_invoices_customer_id (customer_id),
+			CONSTRAINT fk_invoices_customer_id FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE ON UPDATE CASCADE
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+
+		// products
+		`CREATE TABLE IF NOT EXISTS products (
+			id int NOT NULL AUTO_INCREMENT,
+			description varchar(100) DEFAULT NULL,
+			price float DEFAULT NULL,
+			PRIMARY KEY (id)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+
+		// sales
+		`CREATE TABLE IF NOT EXISTS sales (
+			id int NOT NULL AUTO_INCREMENT,
+			quantity int DEFAULT NULL,
+			invoice_id int DEFAULT NULL,
+			product_id int DEFAULT NULL,
+			PRIMARY KEY (id),
+			KEY idx_sales_invoice_id (invoice_id),
+			KEY idx_sales_product_id (product_id),
+			CONSTRAINT fk_sales_invoice_id FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE CASCADE ON UPDATE CASCADE,
+			CONSTRAINT fk_sales_product_id FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE ON UPDATE CASCADE
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+	}
+
+	for i, q := range queries {
+		if _, err := a.db.Exec(q); err != nil {
+			return fmt.Errorf("error creating table #%d: %w", i+1, err)
+		}
+	}
+
+	return nil
 }
 
 func (a *ApplicationDefault) InsertCustomersJSON() error {
