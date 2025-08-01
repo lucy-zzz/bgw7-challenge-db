@@ -75,7 +75,7 @@ func (r *CustomersMySQL) GetTotalByCondition() ([]internal.TotalByConditionRespo
 	rows, err := r.db.Query(query)
 
 	if err != nil {
-		return nil, errors.New("INTERNAL")
+		return nil, errors.New("INTERNAL: error thrown at query execution")
 	}
 	defer rows.Close()
 
@@ -83,7 +83,7 @@ func (r *CustomersMySQL) GetTotalByCondition() ([]internal.TotalByConditionRespo
 	for rows.Next() {
 		var r internal.TotalByConditionResponse
 		if err := rows.Scan(&r.Condition, &r.TotalRounded); err != nil {
-			return nil, errors.New("INTERNAL")
+			return nil, errors.New("INTERNAL: error when trying to scan rows")
 		}
 		results = append(results, r)
 	}
@@ -119,7 +119,7 @@ LIMIT 5
 	for rows.Next() {
 		var r internal.CustomerTopSpentResponse
 		if err := rows.Scan(&r.Id, &r.FirstName, &r.LastName, &r.TotalSpent); err != nil {
-			return nil, err
+			return nil, errors.New("INTERNAL: error when trying to scan rows")
 		}
 		results = append(results, r)
 	}

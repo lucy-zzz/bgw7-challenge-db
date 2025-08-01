@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 
 	"app/internal"
 )
@@ -93,7 +94,7 @@ LIMIT 5;
 	for rows.Next() {
 		var r internal.ProductTopSoldResponse
 		if err := rows.Scan(&r.Id, &r.Description, &r.TotalQuantitySold); err != nil {
-			return nil, err
+			return nil, errors.New("INTERNAL: error when trying to scan rows")
 		}
 		results = append(results, r)
 	}
