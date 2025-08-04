@@ -1,12 +1,15 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"app/internal"
 
 	"github.com/bootcamp-go/web/request"
 	"github.com/bootcamp-go/web/response"
+	"github.com/go-chi/chi/v5"
 )
 
 // NewInvoicesDefault returns a new InvoicesDefault
@@ -27,6 +30,7 @@ type InvoiceJSON struct {
 	Total      float64 `json:"total"`
 	CustomerId int     `json:"customer_id"`
 }
+
 // GetAll returns all invoices
 func (h *InvoicesDefault) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +68,7 @@ type RequestBodyInvoice struct {
 	Total      float64 `json:"total"`
 	CustomerId int     `json:"customer_id"`
 }
+
 // Create creates a new invoice
 func (h *InvoicesDefault) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +108,57 @@ func (h *InvoicesDefault) Create() http.HandlerFunc {
 		response.JSON(w, http.StatusOK, map[string]any{
 			"message": "invoice created",
 			"data":    iv,
+		})
+	}
+}
+
+func (h *InvoicesDefault) Update() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var reqBody RequestBodyInvoice
+		idStr := chi.URLParam(r, "id")
+
+		if idStr == "" {
+			response.Error(w, http.StatusBadRequest, "ID cannot be null")
+			return
+		}
+
+		id, err := strconv.Atoi(idStr)
+
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		err = json.NewDecoder(r.Body).Decode(&reqBody)
+
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		var req internal.InvoiceAttributes
+		req.CustomerId = reqBody.CustomerId
+		req.Datetime = reqBody.Datetime
+		req.Total = reqBody.Total
+
+		data, err := h.sv.Update(req, id)
+
+		if err != nil {
+			if err.Error() == "BAD REQUEST" {
+				response.Error(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			if err.Error() == "NOT FOUND" {
+				response.Error(w, http.StatusNotFound, err.Error())
+				return
+			}
+			response.Error(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "invoice updated",
+			"data":    data,
 		})
 	}
 }

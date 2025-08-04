@@ -108,3 +108,31 @@ func (h *CustomersDefault) Create() http.HandlerFunc {
 		})
 	}
 }
+
+func (h *CustomersDefault) GetTotalsByCondition() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data, err := h.sv.GetTotalByCondition()
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
+	}
+}
+
+func (h *CustomersDefault) GetTopActiveCustomers() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data, err := h.sv.GetTopActiveCustomers()
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
+	}
+}

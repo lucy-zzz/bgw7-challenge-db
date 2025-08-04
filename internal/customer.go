@@ -17,3 +17,15 @@ type Customer struct {
 	// CustomerAttributes is the attributes of the customer.
 	CustomerAttributes
 }
+
+type TotalByConditionResponse struct {
+	Condition    int     `json:"condition"`
+	TotalRounded float64 `json:"total_rounded"`
+}
+
+type CustomerTopSpentResponse struct {
+	Id         int     `json:"id"`
+	FirstName  string  `json:"first_name"`
+	LastName   string  `json:"last_name"`
+	TotalSpent float64 `json:"total_spent"`
+}

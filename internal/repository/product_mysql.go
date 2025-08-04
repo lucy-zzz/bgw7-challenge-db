@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 
 	"app/internal"
 )
@@ -66,4 +67,37 @@ func (r *ProductsMySQL) Save(p *internal.Product) (err error) {
 	(*p).Id = int(id)
 
 	return
+}
+
+func (r *ProductsMySQL) GetTopProducts() ([]internal.ProductTopSoldResponse, error) {
+	rows, err := r.db.Query(`
+SELECT 
+    p.id,
+    p.description,
+    SUM(s.quantity) AS total_quantity_sold
+FROM 
+    products p
+JOIN 
+    sales s ON p.id = s.product_id
+GROUP BY 
+    p.id, p.description
+ORDER BY 
+    total_quantity_sold DESC
+LIMIT 5;
+`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []internal.ProductTopSoldResponse
+	for rows.Next() {
+		var r internal.ProductTopSoldResponse
+		if err := rows.Scan(&r.Id, &r.Description, &r.TotalQuantitySold); err != nil {
+			return nil, errors.New("INTERNAL: error when trying to scan rows")
+		}
+		results = append(results, r)
+	}
+
+	return results, nil
 }

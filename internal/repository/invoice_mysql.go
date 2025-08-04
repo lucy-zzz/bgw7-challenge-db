@@ -2,8 +2,13 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
+	"strings"
 
 	"app/internal"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 // NewInvoicesMySQL creates new mysql repository for invoice entity.
@@ -66,4 +71,92 @@ func (r *InvoicesMySQL) Save(i *internal.Invoice) (err error) {
 	(*i).Id = int(id)
 
 	return
+}
+
+func (r *InvoicesMySQL) FindById(id int) (iv internal.Invoice, err error) {
+	rows, err := r.db.Query(
+		"SELECT * FROM invoices WHERE id = ?",
+		id,
+	)
+
+	if err != nil {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+			if mysqlErr.Number == 1062 {
+				return iv, mysqlErr
+			}
+		}
+		return iv, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&iv.Id, &iv.Datetime, &iv.Total, &iv.CustomerId)
+		if err != nil {
+			return iv, err
+		}
+	}
+
+	return iv, err
+}
+
+func (r *InvoicesMySQL) Update(i internal.InvoiceAttributes, id int) (iv internal.Invoice, err error) {
+	var setClauses []string
+	var args []interface{}
+
+	_, err = r.FindById(id)
+
+	if err != nil {
+		return iv, errors.New("ID not found.")
+	}
+
+	if i.Datetime != "" {
+		setClauses = append(setClauses, "datetime = ?")
+		args = append(args, i.Datetime)
+	}
+
+	if i.CustomerId != 0 {
+		setClauses = append(setClauses, "customer_id = ?")
+		args = append(args, i.CustomerId)
+	}
+
+	if i.Total != 0 {
+		setClauses = append(setClauses, "total = ?")
+		args = append(args, i.Total)
+	}
+
+	if len(setClauses) == 0 {
+		return iv, errors.New("BAD REQUEST")
+	}
+
+	query := fmt.Sprintf("UPDATE invoices SET %s WHERE id = ?", strings.Join(setClauses, ", "))
+	args = append(args, id)
+
+	res, err := r.db.Exec(query, args...)
+	if err != nil {
+		return iv, errors.New("INTERNAL")
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return iv, errors.New("INTERNAL")
+	}
+
+	if rowsAffected == 0 {
+		return iv, errors.New("INTERNAL")
+	}
+
+	row := r.db.QueryRow("SELECT * FROM invoices WHERE id = ?", id)
+	err = row.Scan(
+		&iv.Id,
+		&iv.Datetime,
+		&iv.CustomerId,
+		&iv.Total,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return iv, errors.New("NOT FOUND")
+		}
+		return iv, errors.New("INTERNAL")
+	}
+
+	return iv, nil
 }

@@ -6,4 +6,5 @@ type RepositoryInvoice interface {
 	FindAll() (i []Invoice, err error)
 	// Save saves an invoice
 	Save(i *Invoice) (err error)
+	Update(i InvoiceAttributes, id int) (iv Invoice, err error)
 }

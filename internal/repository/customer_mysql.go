@@ -1,7 +1,9 @@
+// go: generate mockgen -source=../customer_mysql.go-destination=mocks/customer_mock.go~package=mocks
 package repository
 
 import (
 	"database/sql"
+	"errors"
 
 	"app/internal"
 )
@@ -64,7 +66,63 @@ func (r *CustomersMySQL) Save(c *internal.Customer) (err error) {
 
 	// set the id
 	(*c).Id = int(id)
-	
+
 	return
 }
 
+func (r *CustomersMySQL) GetTotalByCondition() ([]internal.TotalByConditionResponse, error) {
+	query := "SELECT `condition`, ROUND(SUM(i.total), 2) AS total_rounded FROM customers c LEFT JOIN invoices i ON c.id = i.customer_id GROUP BY `condition`"
+	rows, err := r.db.Query(query)
+
+	if err != nil {
+		return nil, errors.New("INTERNAL: error thrown at query execution")
+	}
+	defer rows.Close()
+
+	var results []internal.TotalByConditionResponse
+	for rows.Next() {
+		var r internal.TotalByConditionResponse
+		if err := rows.Scan(&r.Condition, &r.TotalRounded); err != nil {
+			return nil, errors.New("INTERNAL: error when trying to scan rows")
+		}
+		results = append(results, r)
+	}
+
+	return results, nil
+}
+
+func (r *CustomersMySQL) GetTopActiveCustomers() ([]internal.CustomerTopSpentResponse, error) {
+	rows, err := r.db.Query(`
+SELECT 
+	c.id,
+	c.first_name,
+	c.last_name,
+	SUM(i.total) AS total_spent
+FROM 
+	customers c
+JOIN 
+	invoices i ON c.id = i.customer_id
+WHERE 
+	c.condition = 1
+GROUP BY 
+	c.id, c.first_name, c.last_name
+ORDER BY 
+	total_spent DESC
+LIMIT 5
+`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []internal.CustomerTopSpentResponse
+	for rows.Next() {
+		var r internal.CustomerTopSpentResponse
+		if err := rows.Scan(&r.Id, &r.FirstName, &r.LastName, &r.TotalSpent); err != nil {
+			return nil, errors.New("INTERNAL: error when trying to scan rows")
+		}
+		results = append(results, r)
+	}
+
+	return results, nil
+}
